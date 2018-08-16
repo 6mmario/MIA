@@ -94,7 +94,7 @@ int main()
     time_t t;
     srand((unsigned) time(&t));
     strcpy(Abecedario,"abcdefghijklmnopqrstuvwxyz");
-    printf(VERDE ">>Para apagar el sistema ingrese el comando \"" CELESTE "exit" VERDE "\"\n" RESET);
+    printf(VERDE ">>PARA SALIR DE LA APLICACIÓN, ESCRIBA LA PALABRA  \"" CELESTE "EXIT" VERDE "\"\n" RESET);
     Ingresar_Comando();
     printf(MAGENTA "Espero ganar MIA esta vez :S\n" RESET);
     return 0;
@@ -105,7 +105,7 @@ int main()
 //###################################################################################################################################
 void Ingresar_Comando()
 {
-    printf(VERDE "Porfavor introduzca un comando...\n" RESET);
+    printf(VERDE "INGRESE COMANDO>>>>>  \n" RESET);
     char temp[500];
     TAG = 0;
     scanf(" %[^\n]s", Normal);
@@ -6350,7 +6350,7 @@ void Add_Espacio(int size, char ruta_Disco[100], char name[20], char unit[1])
             printf("\t>La particion %s no existe.\n" RESET, name);
         }
         fclose(f);
-        printf(">>>>>>>>>>>>>>>>>>>>>>Size %d\n" RESET, mbr.mbr_partition_1.part_size);
+        //printf(">>>>>>>>>>>>>>>>>>>>>>Size %d\n" RESET, mbr.mbr_partition_1.part_size);
         FILE *f_disco = fopen(ruta_Disco, "wb+");
         rewind(f_disco);
         fwrite(&mbr, sizeof(mbr), 1, f_disco);
@@ -6747,18 +6747,20 @@ void Rep_EBR(FILE *fp, FILE *f, struct EBR ebr)
     }
 }
 
-void Rep_EBR_Disco(FILE *fp, FILE *f, struct EBR ebr)
+void Rep_EBR_Disco(FILE *fp, FILE *f, struct EBR ebr, struct MBR mbr)
 {
+
+    float tam = mbr.mbr_tamano;
     if(ebr.part_status != 'n')
     {
         fprintf ( fp, "extendida%s [label=<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">\n",ebr.part_name);
-        fprintf ( fp, "<tr><td><b>EBR</b></td><td><b>logica(%s)</b></td></tr>\n",ebr.part_name);
+        fprintf ( fp, "<tr><td><b>EBR</b></td><td><b>logica(%s) \n %f \% </b></td></tr>\n",ebr.part_name,(ebr.part_size/tam)*100);
         fprintf ( fp, "</table>>];\n");
         if(ebr.part_next != -1)
         {
             fseek(f,ebr.part_next,SEEK_SET);
             fread (&ebr, sizeof(ebr), 1,f);
-            Rep_EBR_Disco(fp, f, ebr);
+            Rep_EBR_Disco(fp, f, ebr,mbr);
         }
     }
 }
@@ -6880,6 +6882,8 @@ void Rep_Disco_Interno(FILE *fp, FILE *f, struct MBR mbr, int comparador)
 {
     TAG = 0;
     struct EBR ebr;
+    float tamanio = mbr.mbr_tamano;
+
     if(mbr.mbr_partition_1.part_status != 'n')
     {
         if(mbr.mbr_partition_1.part_start == comparador)
@@ -6893,18 +6897,18 @@ void Rep_Disco_Interno(FILE *fp, FILE *f, struct MBR mbr, int comparador)
                 EBR_Ini = ebr.part_next;
                 if(ebr.part_status == 'n')
                 {
-                    fprintf ( fp, "extendida [label=\"Extendida(vacia)\"];");
+                    fprintf ( fp, "extendida [label=\"Extendida(vacia) \n %f \%\"];",(mbr.mbr_partition_1.part_size/tamanio)*100.00);
                 }
                 else
                 {
                     fprintf ( fp, "subgraph sub { \n");
-                    Rep_EBR_Disco(fp,f,ebr);
+                    Rep_EBR_Disco(fp,f,ebr,mbr);
                     fprintf ( fp, "}");
                 }
             }
             else
             {
-                fprintf ( fp, "primaria%s [label=\"primaria(%s)\"];", mbr.mbr_partition_1.part_name, mbr.mbr_partition_1.part_name);
+                fprintf ( fp, "primaria%s [label=\"primaria(%s) \n %f \% \"];", mbr.mbr_partition_1.part_name, mbr.mbr_partition_1.part_name,(mbr.mbr_partition_1.part_size/tamanio)*100.00);
             }
         }
     }
@@ -6921,19 +6925,19 @@ void Rep_Disco_Interno(FILE *fp, FILE *f, struct MBR mbr, int comparador)
                 EBR_Ini = ebr.part_next;
                 if(ebr.part_status == 'n')
                 {
-                    fprintf ( fp, "extendida [label=\"Extendida(vacia)\"];");
+                    fprintf ( fp, "extendida [label=\"Extendida(vacia) \n %f \%\"];",(mbr.mbr_partition_2.part_size/tamanio)*100.00);
                 }
                 else
                 {
                     fprintf ( fp, "subgraph sub { \n");
-                    Rep_EBR_Disco(fp,f,ebr);
+                    Rep_EBR_Disco(fp,f,ebr,mbr);
                     fprintf ( fp, "}");
                 }
 
             }
             else
             {
-                fprintf ( fp, "primaria%s [label=\"primaria(%s)\"];", mbr.mbr_partition_2.part_name, mbr.mbr_partition_2.part_name);
+                fprintf ( fp, "primaria%s [label=\"primaria(%s) \n %f \% \"];", mbr.mbr_partition_2.part_name, mbr.mbr_partition_2.part_name,(mbr.mbr_partition_2.part_size/tamanio)*100.00);
             }
         }
     }
@@ -6950,18 +6954,18 @@ void Rep_Disco_Interno(FILE *fp, FILE *f, struct MBR mbr, int comparador)
                 EBR_Ini = ebr.part_next;
                 if(ebr.part_status == 'n')
                 {
-                    fprintf ( fp, "extendida [label=\"Extendida(vacia)\"];");
+                    fprintf ( fp, "extendida [label=\"Extendida(vacia) \n %f \% \"];",(mbr.mbr_partition_3.part_size/tamanio)*100.00);
                 }
                 else
                 {
                     fprintf ( fp, "subgraph sub1 { \n");
-                    Rep_EBR_Disco(fp,f,ebr);
+                    Rep_EBR_Disco(fp,f,ebr,mbr);
                     fprintf ( fp, "}");
                 }
             }
             else
             {
-                fprintf ( fp, "primaria%s [label=\"primaria(%s)\"];", mbr.mbr_partition_3.part_name, mbr.mbr_partition_3.part_name);
+                fprintf ( fp, "primaria%s [label=\"primaria(%s) \n %f \% \"];", mbr.mbr_partition_3.part_name, mbr.mbr_partition_3.part_name,(mbr.mbr_partition_3.part_size/tamanio)*100.00);
             }
         }
     }
@@ -6978,18 +6982,18 @@ void Rep_Disco_Interno(FILE *fp, FILE *f, struct MBR mbr, int comparador)
                 EBR_Ini = ebr.part_next;
                 if(ebr.part_status == 'n')
                 {
-                    fprintf ( fp, "extendida [label=\"Extendida(vacia)\"];");
+                    fprintf ( fp, "extendida [label=\"Extendida(vacia) \n %f \%\"];",(mbr.mbr_partition_4.part_size/tamanio)*100.00);
                 }
                 else
                 {
                     fprintf ( fp, "subgraph sub1 { \n");
-                    Rep_EBR_Disco(fp,f,ebr);
+                    Rep_EBR_Disco(fp,f,ebr,mbr);
                     fprintf ( fp, "}");
                 }
             }
             else
             {
-                fprintf ( fp, "primaria%s [label=\"primaria(%s)\"];", mbr.mbr_partition_4.part_name, mbr.mbr_partition_4.part_name);
+                fprintf ( fp, "primaria%s [label=\"primaria(%s) \n %f \% \"];", mbr.mbr_partition_4.part_name, mbr.mbr_partition_4.part_name,(mbr.mbr_partition_4.part_size/tamanio)*100.00);
             }
         }
     }
@@ -7003,23 +7007,32 @@ void Rep_Disco_Interno(FILE *fp, FILE *f, struct MBR mbr, int comparador)
         if(comparador < mbr.mbr_partition_1.part_start)
         {
             respaldo = mbr.mbr_partition_1.part_start;
+           fprintf ( fp, "libre1 [label=\"libre \\n %f \% \"];",(mbr.mbr_partition_1.part_size/tamanio)*100.00);
             TAG = 11;
         }
         if((comparador < mbr.mbr_partition_2.part_start)&&((respaldo > mbr.mbr_partition_2.part_start)||(TAG == 0)))
         {
             respaldo = mbr.mbr_partition_2.part_start;
+
+           fprintf ( fp, "libre2 [label=\"libre \\n %f \% \"];",(mbr.mbr_partition_2.part_size/tamanio)*100.00);
             TAG = 11;
         }
         if((comparador < mbr.mbr_partition_3.part_start)&&((respaldo > mbr.mbr_partition_3.part_start)||(TAG == 0)))
         {
             respaldo = mbr.mbr_partition_3.part_start;
+
+            fprintf ( fp, "libre3 [label=\"libre \\n %f \% \"];",(mbr.mbr_partition_3.part_size/tamanio)*100.00);
             TAG = 11;
         }
         if((comparador < mbr.mbr_partition_4.part_start)&&((respaldo > mbr.mbr_partition_4.part_start)||(TAG == 0)))
         {
             respaldo = mbr.mbr_partition_4.part_start;
+        fprintf ( fp, "libre4 [label=\"libre \\n %f \% \"];",(mbr.mbr_partition_4.part_size/tamanio)*100.00);
             TAG = 11;
         }
+
+        //printf("Porcentaje es: %f ",(respaldo/tamanio)*100.00);
+
     }
 
     if(TAG == 10)
@@ -7061,14 +7074,6 @@ void Rep_Disco(char path[100], char pSalida[150])
         system(rutacompleta);
         sleep(2);
         printf("\t>>" VERDE "Reporte de disco creado exitosamente!\n" RESET);
-        /*char *ejecutar = malloc(100);
-        memset(ejecutar, 0, sizeof(ejecutar));
-        strcat(ejecutar, "run-mailcap /");
-        strcat(ejecutar, pSalida);
-        strcat(ejecutar, " &");
-        strcat(ejecutar, "\0");
-        system(ejecutar);
-        */
     }
     else
     {
@@ -7330,19 +7335,19 @@ void Analizar_Comando(char *linea, char *palabra)
                 strcpy(aux2, aux);
                 if (aux[0]=='\"')
                 {
-                  while(strcmp(&aux2[strlen(aux2) -1], "\"") != 0)
-                  {
-                      temp = strtok(NULL, " ");
-                      strcat(aux, " ");
-                      strcat(aux, temp);
-                      strcpy(aux2, aux);
-                  }
+                    while(strcmp(&aux2[strlen(aux2) -1], "\"") != 0)
+                    {
+                        temp = strtok(NULL, " ");
+                        strcat(aux, " ");
+                        strcat(aux, temp);
+                        strcpy(aux2, aux);
+                    }
 
-                  char* otroaux = malloc(150);
-                  memset(&otroaux[0], 0, sizeof(otroaux));
-                  strncpy(otroaux, aux2 + 1, strlen(aux2) - 2);
-                  otroaux[strlen(aux2)-2] = '\0';
-                  strcpy(ruta_Disco, otroaux);
+                    char* otroaux = malloc(150);
+                    memset(&otroaux[0], 0, sizeof(otroaux));
+                    strncpy(otroaux, aux2 + 1, strlen(aux2) - 2);
+                    otroaux[strlen(aux2)-2] = '\0';
+                    strcpy(ruta_Disco, otroaux);
                 }
                 else
                 {
